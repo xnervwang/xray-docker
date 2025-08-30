@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-XRAY_BIN="/app/bin/xray"
-XRAY_CONFIG_TEMPLATE="/app/etc/xray.json.template"
-XRAY_CONFIG="/app/etc/xray.json"
+# 常量
+XRAY_BIN="/usr/local/bin/xray"
+XRAY_TMPL="/app/etc/xray.json.template"
+XRAY_CONF="/app/etc/xray.json"
+XRAY_ASSETS="/app/assets"
 
-# 必填环境变量清单
+# 模板里会用到的变量（无前缀）
 required_vars=(
   LOG_LEVEL
   LISTEN_PORT
@@ -19,34 +21,39 @@ required_vars=(
   RULE_PROXY_IP
 )
 
-die() { echo "[xray] ERROR: $*" >&2; exit 1; }
+die(){ echo "[xray] ERROR: $*" >&2; exit 1; }
 info(){ echo "[xray] $*"; }
 
-# 检查必填环境变量
+# 允许用 XRAY_* 注入；若无前缀未设置且存在 XRAY_ 同名，则回填
 for v in "${required_vars[@]}"; do
-  if [[ -z "${!v-}" ]]; then
-    die "Missing required env: $v"
+  pv="XRAY_${v}"
+  if [[ -z "${!v-}" && -n "${!pv-}" ]]; then
+    export "$v"="${!pv}"
   fi
 done
 
-# 检查模板是否存在
-[[ -f "$XRAY_CONFIG_TEMPLATE" ]] || die "Config template not found: $XRAY_CONFIG_TEMPLATE"
+# 校验必填
+for v in "${required_vars[@]}"; do
+  [[ -n "${!v-}" ]] || die "Missing required env: ${v} (or XRAY_${v})"
+done
 
-# 提取模板中出现的变量
-mapfile -t vars_in_tmpl < <(grep -oE '\$\{[A-Za-z_][A-Za-z0-9_]*\}' "$XRAY_CONFIG_TEMPLATE" | sed 's/[${}]//g' | sort -u)
+# 模板存在性
+[[ -f "$XRAY_TMPL" ]] || die "Template not found: $XRAY_TMPL"
+
+# 仅替换模板中出现的变量，避免把整个环境打进去
+mapfile -t vars_in_tmpl < <(grep -oE '\$\{[A-Za-z_][A-Za-z0-9_]*\}' "$XRAY_TMPL" | sed 's/[${}]//g' | sort -u)
 repl_list=""
 for v in "${vars_in_tmpl[@]}"; do repl_list+="\${$v} "; done
 
-# 渲染配置
-info "Rendering config -> $XRAY_CONFIG"
+info "Rendering $XRAY_CONF"
 # shellcheck disable=SC2086
-envsubst "$repl_list" < "$XRAY_CONFIG_TEMPLATE" > "$XRAY_CONFIG"
+envsubst "$repl_list" < "$XRAY_TMPL" > "$XRAY_CONF"
 
-# JSON 基本校验（可选）
-if command -v jq >/dev/null 2>&1; then
-  jq . >/dev/null < "$XRAY_CONFIG" || die "Rendered config is not valid JSON"
-fi
+# JSON 校验
+jq . >/dev/null < "$XRAY_CONF" || die "Rendered config is not valid JSON"
 
-# 启动 Xray
+# 确保 geosite/geoip 可读
+export XRAY_LOCATION_ASSET="$XRAY_ASSETS"
+
 info "Starting Xray..."
-exec "$XRAY_BIN" run -c "$XRAY_CONFIG"
+exec "$XRAY_BIN" run -c "$XRAY_CONF"
