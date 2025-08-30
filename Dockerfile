@@ -29,5 +29,5 @@ VOLUME ["/app/etc", "/app/log"]
 
 EXPOSE 1080
 
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["run"]
