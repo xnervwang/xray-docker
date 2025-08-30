@@ -49,6 +49,13 @@ info "Rendering $XRAY_CONF"
 # shellcheck disable=SC2086
 envsubst "$repl_list" < "$XRAY_TMPL" > "$XRAY_CONF"
 
+# **打印渲染结果（便于你排查变量替换）**
+echo "[xray] Rendered config content:"
+echo "------------------ BEGIN xray.json ------------------"
+cat "$XRAY_CONF"
+echo
+echo "------------------- END  xray.json -------------------"
+
 # JSON 校验
 jq . >/dev/null < "$XRAY_CONF" || die "Rendered config is not valid JSON"
 
