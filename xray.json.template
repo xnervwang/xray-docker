@@ -1,0 +1,78 @@
+{
+  "log": {
+    "loglevel": "<LOG_LEVEL>"
+  },
+  "inbounds": [
+    {
+      "port": <LISTEN_PORT>,         // Xray 监听的端口，供 Stunnel 连接
+      "listen": "<LISTEN_IP>",
+      "protocol": "<LISTEN_PROTOCOL>",
+      "settings": {
+        "auth": "no",
+        "udp": true
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      // 1. 用于“翻墙”的代理（IP/域名流量走这里）
+      "protocol": "<OUTBOUND_PROTOCOL>",
+      "settings": {
+        "servers": [
+          {
+            "address": "<OUTBOUND_IP>",
+            "port": <OUTBOUND_PORT>
+          }
+        ]
+      },
+      "tag": "proxy"  // 标签：代理
+    },
+    {
+      // 2. 直接从本机出去，接入美国网络
+      "protocol": "freedom",  // Freedom 协议表示直连
+      "settings": {},
+      "tag": "direct"    // 标签：直连
+    },
+    {
+      // 黑洞出站（可选，用于阻止特定流量）
+      "protocol": "blackhole",
+      "settings": {},
+      "tag": "block"
+    }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      // 规则优先级：从上到下匹配。第一条匹配的规则生效。
+
+      // 1. 私有 IP 流量直连 (防止回环或内部流量转发)
+      {
+        "type": "field",
+        "ip": ["geoip:private"],
+        "outboundTag": "direct" // 私有IP走直连
+      },
+      // 2. 域名流量走 proxy（翻墙）
+      {
+        "type": "field",
+        "domain": ["<OUTBOUND_SITE>"],
+        "outboundTag": "proxy"
+      },
+      // 3. IP 流量走 proxy（翻墙回）
+      {
+        "type": "field",
+        "ip": ["<OUTBOUND_IP>"],
+        "outboundTag": "proxy"
+      },
+      // 4. 默认规则：所有其他未被前面规则匹配的流量，都直连网络
+      {
+        "type": "field",
+        "ip": ["0.0.0.0/0", "::/0"], // 匹配所有 IPv4 和 IPv6 地址
+        "outboundTag": "direct"
+      }
+    ]
+  }
+}
