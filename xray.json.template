@@ -1,12 +1,12 @@
 {
   "log": {
-    "loglevel": "<LOG_LEVEL>"
+    "loglevel": "${LOG_LEVEL}"
   },
   "inbounds": [
     {
-      "port": <LISTEN_PORT>,         // Xray 监听的端口，供 Stunnel 连接
-      "listen": "<LISTEN_IP>",
-      "protocol": "<LISTEN_PROTOCOL>",
+      "port": ${LISTEN_PORT},         // Xray 监听的端口，供 Stunnel 连接
+      "listen": "${LISTEN_IP}",
+      "protocol": "${LISTEN_PROTOCOL}",
       "settings": {
         "auth": "no",
         "udp": true
@@ -20,12 +20,12 @@
   "outbounds": [
     {
       // 1. 用于“翻墙”的代理（IP/域名流量走这里）
-      "protocol": "<OUTBOUND_PROTOCOL>",
+      "protocol": "${OUTBOUND_PROTOCOL}",
       "settings": {
         "servers": [
           {
-            "address": "<OUTBOUND_IP>",
-            "port": <OUTBOUND_PORT>
+            "address": "${OUTBOUND_IP}",
+            "port": ${OUTBOUND_PORT}
           }
         ]
       },
@@ -52,19 +52,19 @@
       // 1. 私有 IP 流量直连 (防止回环或内部流量转发)
       {
         "type": "field",
-        "ip": ["geoip:private"],
+        "ip": ["${RULE_PRIVATE_IP}"],
         "outboundTag": "direct" // 私有IP走直连
       },
       // 2. 域名流量走 proxy（翻墙）
       {
         "type": "field",
-        "domain": ["<OUTBOUND_SITE>"],
+        "domain": ["${RULE_PROXY_SITE}"],
         "outboundTag": "proxy"
       },
-      // 3. IP 流量走 proxy（翻墙回）
+      // 3. IP 流量走 proxy（翻墙）
       {
         "type": "field",
-        "ip": ["<OUTBOUND_IP>"],
+        "ip": ["${RULE_PROXY_IP}"],
         "outboundTag": "proxy"
       },
       // 4. 默认规则：所有其他未被前面规则匹配的流量，都直连网络
