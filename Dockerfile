@@ -1,17 +1,29 @@
 # syntax=docker/dockerfile:1.6
+
+######## ① 构建阶段：拉源码并本机构架编译 ########
+FROM golang:1.22-alpine AS build
+# 用明确的版本分支/Tag，而不是 latest（可按需覆盖）
+ARG XRAY_REF=v1.8.23
+RUN apk add --no-cache git
+WORKDIR /src
+
+# 拉取 Xray 源码（指定分支/Tag/commit）
+RUN git clone --depth=1 --branch ${XRAY_REF} https://github.com/XTLS/Xray-core.git .
+
+# 官方推荐参数，一行编译；跟随当前构建机架构（不跨编译）
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 go build -o /out/xray -trimpath -buildvcs=false -ldflags="-s -w -buildid=" -v ./main
+
+######## ② 运行阶段：复制二进制并保持你原有布局 ########
 FROM alpine:3.20
 
-ARG XRAY_VERSION=1.8.23
-
-# 需要: envsubst, nc(healthcheck), curl/unzip
-RUN apk add --no-cache ca-certificates tzdata bash curl unzip gettext busybox-extras \
+# 需要: envsubst, nc(healthcheck), curl(拉 geodata)
+RUN apk add --no-cache ca-certificates tzdata bash curl gettext busybox-extras \
  && mkdir -p /app/etc /app/assets /app/log
 
-# 安装 Xray 二进制（amd64 示例；如需多架构可自行调整资产名）
-RUN curl -fsSL -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/download/v${XRAY_VERSION}/Xray-linux-64.zip" \
- && unzip -q /tmp/xray.zip -d /tmp/xray \
- && install -m 0755 /tmp/xray/xray /usr/local/bin/xray \
- && rm -rf /tmp/xray /tmp/xray.zip
+# 从构建阶段复制编译好的 xray 可执行文件
+COPY --from=build /out/xray /usr/local/bin/xray
 
 # 放入模板（你的仓库里要有同名文件）
 COPY xray.json.template /app/etc/xray.json.template
