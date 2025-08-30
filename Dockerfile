@@ -3,8 +3,8 @@ FROM alpine:3.20
 
 ARG XRAY_VERSION=1.8.23
 
-# 需要: envsubst(jq 校验), nc(healthcheck), curl/unzip
-RUN apk add --no-cache ca-certificates tzdata bash curl unzip gettext jq busybox-extras \
+# 需要: envsubst, nc(healthcheck), curl/unzip
+RUN apk add --no-cache ca-certificates tzdata bash curl unzip gettext busybox-extras \
  && mkdir -p /app/etc /app/assets /app/log
 
 # 安装 Xray 二进制（amd64 示例；如需多架构可自行调整资产名）
