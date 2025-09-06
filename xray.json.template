@@ -1,12 +1,14 @@
 {
   "log": {
-    "loglevel": "${LOG_LEVEL}"
+    "loglevel": "debug",     // debug / info / warning / error
+    "access": "/dev/stdout",
+    "error": "/dev/stderr"
   },
   "inbounds": [
     {
-      "port": ${LISTEN_PORT},         // Xray 监听的端口，供 Stunnel 连接
-      "listen": "${LISTEN_IP}",
-      "protocol": "${LISTEN_PROTOCOL}",
+      "port": ${SOCKS_LISTEN_PORT},         // Xray 监听的端口，供 Stunnel 连接
+      "listen": "${SOCKS_LISTEN_IP}",
+      "protocol": "socks",
       "settings": {
         "auth": "no",
         "udp": true
@@ -15,6 +17,23 @@
         "enabled": true,
         "destOverride": ["http", "tls"]
       }
+    },
+    {
+      "port": ${HTTP_LISTEN_PORT},     // HTTP 代理监听端口
+      "listen": "${HTTP_LISTEN_IP}",
+      "protocol": "http",
+      "settings": {
+        "accounts": [
+          { "user": "${HTTP_USERNAME_1}", "pass": "${HTTP_PASSWORD_1}" },
+          { "user": "${HTTP_USERNAME_2}", "pass": "${HTTP_PASSWORD_2}" }
+        ],
+        "allowTransparent": false      // 典型正向代理场景保持为 false
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls"]
+      },
+      "tag": "http-in"
     }
   ],
   "outbounds": [

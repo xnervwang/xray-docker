@@ -10,9 +10,14 @@ XRAY_ASSETS="/app/assets"
 # 模板里会用到的变量（无前缀）
 required_vars=(
   LOG_LEVEL
-  LISTEN_PORT
-  LISTEN_IP
-  LISTEN_PROTOCOL
+  SOCKS_LISTEN_PORT
+  SOCKS_LISTEN_IP
+  HTTP_LISTEN_PORT
+  HTTP_LISTEN_IP
+  HTTP_USERNAME_1
+  HTTP_PASSWORD_1
+  HTTP_USERNAME_2
+  HTTP_PASSWORD_2
   OUTBOUND_PROTOCOL
   OUTBOUND_IP
   OUTBOUND_PORT
@@ -34,7 +39,7 @@ done
 
 # 校验必填
 for v in "${required_vars[@]}"; do
-  [[ -n "${!v-}" ]] || die "Missing required env: ${v} (or XRAY_${v})"
+  [[ -n "${!v-}" ]] || die "Missing required env: ${v}"
 done
 
 # 模板存在性
