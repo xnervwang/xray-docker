@@ -1,0 +1,38 @@
+{
+  "log": {
+    "loglevel": "${LOG_LEVEL}",
+    "access": "/dev/stdout",
+    "error": "/dev/stderr"
+  },
+  "inbounds": [
+    {
+      "port": ${SOCKS_LISTEN_PORT},
+      "listen": "${SOCKS_LISTEN_IP}",
+      "protocol": "socks",
+      "settings": {
+        "auth": "no",
+        "udp": true
+      },
+      "sniffing": { "enabled": true, "destOverride": ["http", "tls"] },
+      "tag": "socks-in"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "${OUTBOUND_PROTOCOL}",
+      "settings": { "servers": [ { "address": "${OUTBOUND_IP}", "port": ${OUTBOUND_PORT} } ] },
+      "tag": "proxy"
+    },
+    { "protocol": "freedom", "settings": {}, "tag": "direct" },
+    { "protocol": "blackhole", "settings": {}, "tag": "block" }
+  ],
+  "routing": {
+    "domainStrategy": "IPIfNonMatch",
+    "rules": [
+      { "type": "field", "ip": ["${RULE_PRIVATE_IP}"], "outboundTag": "direct" },
+      { "type": "field", "domain": ["${RULE_PROXY_SITE}"], "outboundTag": "proxy" },
+      { "type": "field", "ip": ["${RULE_PROXY_IP}"], "outboundTag": "proxy" },
+      { "type": "field", "ip": ["0.0.0.0/0", "::/0"], "outboundTag": "direct" }
+    ]
+  }
+}

@@ -25,8 +25,9 @@ RUN apk add --no-cache ca-certificates tzdata bash curl gettext busybox-extras \
 # 从构建阶段复制编译好的 xray 可执行文件
 COPY --from=build /out/xray /usr/local/bin/xray
 
-# 放入模板（你的仓库里要有同名文件）
-COPY xray.json.template /app/etc/xray.json.template
+# 放入模板
+COPY xray-http.json.template /app/etc/xray-http.json.template
+COPY xray-socks.json.template /app/etc/xray-socks.json.template
 
 # 内置 geosite/geoip 数据，供 geosite:/geoip: 规则使用
 # 若你在 entrypoint 里 export XRAY_LOCATION_ASSET=/app/assets，xray 会从此处读取
