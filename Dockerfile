@@ -29,13 +29,6 @@ COPY --from=build /out/xray /usr/local/bin/xray
 COPY xray-http.json.template /app/etc/xray-http.json.template
 COPY xray-socks.json.template /app/etc/xray-socks.json.template
 
-# Built-in geosite/geoip data for geosite:/geoip: rules usage
-# If you export XRAY_LOCATION_ASSET=/app/assets in entrypoint, xray will read from here
-RUN curl -fsSL -o /app/assets/geosite.dat \
-      https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat \
- && curl -fsSL -o /app/assets/geoip.dat \
-      https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
-
 # Entry script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh

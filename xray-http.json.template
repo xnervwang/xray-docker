@@ -29,10 +29,10 @@
   "routing": {
     "domainStrategy": "IPIfNonMatch",
     "rules": [
-      { "type": "field", "ip": ["${RULE_PRIVATE_IP}"], "outboundTag": "direct" },
-      { "type": "field", "domain": ["${RULE_PROXY_SITE}"], "outboundTag": "proxy" },
-      { "type": "field", "ip": ["${RULE_PROXY_IP}"], "outboundTag": "proxy" },
-      { "type": "field", "ip": ["0.0.0.0/0", "::/0"], "outboundTag": "direct" }
+      { "type": "field", "ip": ["${RULE_PRIVATE_IP}"], "outboundTag": "${PRIVATE_IP_OUTBOUND}" },
+      { "type": "field", "domain": ["${RULE_PROXY_SITE}"], "outboundTag": "${PROXY_SITE_OUTBOUND}" },
+      { "type": "field", "ip": ["${RULE_PROXY_IP}"], "outboundTag": "${PROXY_IP_OUTBOUND}" },
+      { "type": "field", "ip": ["0.0.0.0/0", "::/0"], "outboundTag": "${DEFAULT_OUTBOUND}" }
     ]
   }
 }
